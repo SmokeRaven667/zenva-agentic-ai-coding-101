@@ -1,14 +1,53 @@
-import { useState } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import heroImg from './assets/hero.png'
 import './App.css'
 
+const PARTICLES = ['🎉', '✨', '⚡', '🌟', '💥', '🎊']
+
 function App() {
   const [count, setCount] = useState(0)
+  const [particles, setParticles] = useState([])
+  const [popping, setPopping] = useState(false)
+  const nextId = useRef(0)
+
+  const handleClick = useCallback((e) => {
+    setCount((c) => c + 1)
+
+    setPopping(true)
+    setTimeout(() => setPopping(false), 300)
+
+    const rect = e.currentTarget.getBoundingClientRect()
+    const cx = rect.left + rect.width / 2
+    const cy = rect.top + rect.height / 2
+
+    const burst = Array.from({ length: 6 }, (_, i) => ({
+      id: nextId.current++,
+      emoji: PARTICLES[i],
+      x: cx,
+      y: cy,
+      angle: (i / 6) * 360,
+    }))
+
+    setParticles((prev) => [...prev, ...burst])
+    setTimeout(() => {
+      setParticles((prev) => prev.filter((p) => !burst.some((b) => b.id === p.id)))
+    }, 700)
+  }, [])
 
   return (
     <>
+      {particles.map((p) => (
+        <span
+          key={p.id}
+          className="particle"
+          style={{ '--angle': `${p.angle}deg`, left: p.x, top: p.y }}
+        >
+          {p.emoji}
+        </span>
+      ))}
+
       <section id="center">
         <div className="hero">
           <img src={heroImg} className="base" width="170" height="179" alt="" />
@@ -23,8 +62,8 @@ function App() {
         </div>
         <button
           type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
+          className={`counter${popping ? ' pop' : ''}`}
+          onClick={handleClick}
         >
           Count is {count}
         </button>
